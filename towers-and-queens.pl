@@ -20,7 +20,7 @@ towers([_|[]]).
 
 towers([T1|TS]) :-
 	validTower(T1, TS),
-	towers([TS).
+	towers([TS]).
 
 validTower([_,_], []).
 	

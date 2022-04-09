@@ -29,10 +29,21 @@ main([]).   % basecase is true
 
 main([SizeX, SizeY], RS, BS, QS) :-
 	findall([X, Y], (between(1, SizeX, X), between(1, SizeY, Y)), Loc),
+	instantiateSolution(Loc, RS, BS, QS),
+	correctSolution(Loc, RS, BS, QS).
+
+instantiateSolution(Loc, RS, BS, QS) :-
 	checkQueens(Loc, QS, []),
-	checkBishops(Loc, BS, QS),
-	append(BS, QS, PS),
-	checkRooks(Loc, RS, PS).
+	checkBishops(Loc, BS, []),
+	checkRooks(Loc, RS, []).
+
+correctSolution(Loc, RS, BS, QS) :-
+	append([RS, BS], PS_Q),
+	checkQueens(Loc, QS, PS_Q),
+	append([RS, QS], PS_B),
+	checkBishops(Loc, BS, PS_B),
+	append([BS, QS], PS_R),
+	checkRooks(Loc, RS, PS_R).
 
 checkQueens(_, [], _).
 

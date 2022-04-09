@@ -19,18 +19,6 @@
 /*			Q7 = [2, 5],																													*/
 /*			Q8 = [1, 1] 																													*/
 
-/* FACTS */
-
-loc([1,1]). loc([1,2]). loc([1,3]). loc([1,4]). loc([1,5]). loc([1,6]). loc([1,7]). loc([1,8]).
-loc([2,1]). loc([2,2]). loc([2,3]). loc([2,4]). loc([2,5]). loc([2,6]). loc([2,7]). loc([2,8]).
-loc([3,1]). loc([3,2]). loc([3,3]). loc([3,4]). loc([3,5]). loc([3,6]). loc([3,7]). loc([3,8]).
-loc([4,1]). loc([4,2]). loc([4,3]). loc([4,4]). loc([4,5]). loc([4,6]). loc([4,7]). loc([4,8]).
-loc([5,1]). loc([5,2]). loc([5,3]). loc([5,4]). loc([5,5]). loc([5,6]). loc([5,7]). loc([5,8]).
-loc([6,1]). loc([6,2]). loc([6,3]). loc([6,4]). loc([6,5]). loc([6,6]). loc([6,7]). loc([6,8]).
-loc([7,1]). loc([7,2]). loc([7,3]). loc([7,4]). loc([7,5]). loc([7,6]). loc([7,7]). loc([7,8]).
-loc([8,1]). loc([8,2]). loc([8,3]). loc([8,4]). loc([8,5]). loc([8,6]). loc([8,7]). loc([8,8]).
-
-
 /* RULES */
 
 /* to solve the puzzle, all eight queens must be placed in locations such that no two queens threaten each other */
@@ -39,19 +27,20 @@ loc([8,1]). loc([8,2]). loc([8,3]). loc([8,4]). loc([8,5]). loc([8,6]). loc([8,7
 
 main([]).   % basecase is true 
 
-main(RS, BS, QS) :-
-	checkQueens(QS, []),
-	checkBishops(BS, QS),
+main([SizeX, SizeY], RS, BS, QS) :-
+	findall([X, Y], (between(1, SizeX, X), between(1, SizeY, Y)), Loc),
+	checkQueens(Loc, QS, []),
+	checkBishops(Loc, BS, QS),
 	append(BS, QS, PS),
-	checkRooks(RS, PS).
+	checkRooks(Loc, RS, PS).
 
-checkQueens([], _).
+checkQueens(_, [], _).
 
-checkQueens([Q|QS], PS) :-    % recursive step
+checkQueens(Loc, [Q|QS], PS) :-    % recursive step
 	/* call on remaining Queens first so that we start at the back */
-	checkQueens(QS, PS),
+	checkQueens(Loc, QS, PS),
 	/* all queens are locations */
-	loc(Q),
+	member(Q, Loc),
 	/* queen's location must be valid with those after it */
 	append(QS, PS, QPS),
 	validQueens(Q, QPS).
@@ -72,13 +61,13 @@ validQueens([A|B], [[C|D]|PS]) :-     % recursive step
 	/* then test [A|B] against remaining PS */
 	validQueens([A|B], PS).
 
-checkBishops([], _).
+checkBishops(_, [], _).
 
-checkBishops([B|BS], PS) :-    % recursive step
+checkBishops(Loc, [B|BS], PS) :-    % recursive step
 	/* call on remaining Bishops first so that we start at the back */
-	checkBishops(BS, PS),
+	checkBishops(Loc, BS, PS),
 	/* all bishops are locations */
-	loc(B),
+	member(B, Loc),
 	/* bishop's location must be valid with those after it */
 	append(BS, PS, BPS),
 	validBishops(B, BPS).
@@ -92,13 +81,13 @@ validBishops([A|B], [[C|D]|PS]) :-     % recursive step
 	/* then test [A|B] against remaining PS */
 	validBishops([A|B], PS).
 
-checkRooks([], _).
+checkRooks(_, [], _).
 
-checkRooks([R|RS], PS) :-    % recursive step
+checkRooks(Loc, [R|RS], PS) :-    % recursive step
 	/* call on remaining Rooks first so that we start at the back */
-	checkRooks(RS, PS),
+	checkRooks(Loc, RS, PS),
 	/* all rooks are locations */
-	loc(R),
+	member(R, Loc),
 	/* rook's location must be valid with those after it */
 	append(RS, PS, RPS),
 	validRooks(R, RPS).

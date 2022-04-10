@@ -27,23 +27,29 @@
 
 main([]).   % basecase is true 
 
-main([SizeX, SizeY], RS, BS, QS) :-
+main([SizeX, SizeY], AS, NS, RS, BS, QS) :-
 	findall([X, Y], (between(1, SizeX, X), between(1, SizeY, Y)), Loc),
-	instantiateSolution(Loc, RS, BS, QS),
-	correctSolution(Loc, RS, BS, QS).
+	possibleSolution(Loc, AS, NS, RS, BS, QS),
+	correctSolution(Loc, AS, NS, RS, BS, QS).
 
-instantiateSolution(Loc, RS, BS, QS) :-
+possibleSolution(Loc, AS, NS, RS, BS, QS) :-
 	checkQueens(Loc, QS, []),
 	checkBishops(Loc, BS, []),
-	checkRooks(Loc, RS, []).
+	checkRooks(Loc, RS, []),
+	checkKnights(Loc, NS, []),
+	checkAmazons(Loc, AS, []).
 
-correctSolution(Loc, RS, BS, QS) :-
-	append([RS, BS], PS_Q),
+correctSolution(Loc, AS, NS, RS, BS, QS) :-
+	append([AS, NS, RS, BS], PS_Q),
 	checkQueens(Loc, QS, PS_Q),
-	append([RS, QS], PS_B),
+	append([AS, NS, RS, QS], PS_B),
 	checkBishops(Loc, BS, PS_B),
-	append([BS, QS], PS_R),
-	checkRooks(Loc, RS, PS_R).
+	append([AS, NS, BS, QS], PS_R),
+	checkRooks(Loc, RS, PS_R),
+	append([AS, RS, BS, QS], PS_N),
+	checkKnights(Loc, NS, PS_N),
+	append([NS, RS, BS, QS], PS_A),
+	checkAmazons(Loc, AS, PS_A).
 
 checkQueens(_, [], _).
 
@@ -112,4 +118,56 @@ validRooks([A|B], [[C|D]|PS]) :-     % recursive step
 	/* then test [A|B] against remaining PS */
 	validRooks([A|B], PS).
 
+checkKnights(_, [], _).
+
+checkKnights(Loc, [N|NS], PS) :-    % recursive step
+	/* call on remaining Knights first so that we start at the back */
+	checkKnights(Loc, NS, PS),
+	/* all knights are locations */
+	member(N, Loc),
+	/* knights's location must be valid with those after it */
+	append(NS, PS, NPS),
+	validKnights(Loc, N, NPS).
+
+validKnights(_, [_|_], []).    % basecase is true
+
+validKnights(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
+	(A =\= C -> true; B =\= D),
+	(A+2 =\= C -> true; B+1 =\= D),
+	(A+2 =\= C -> true; B-1 =\= D),
+	(A-2 =\= C -> true; B+1 =\= D),
+	(A-2 =\= C -> true; B-1 =\= D),
+	(A+1 =\= C -> true; B+2 =\= D),
+	(A+1 =\= C -> true; B-2 =\= D),
+	(A-1 =\= C -> true; B+2 =\= D),
+	(A-1 =\= C -> true; B-2 =\= D),
+	validKnights(Loc, [A|B], PS).
+
+checkAmazons(_, [], _).
+
+checkAmazons(Loc, [A|AS], PS) :-    % recursive step
+	/* call on remaining Amazons first so that we start at the back */
+	checkAmazons(Loc, AS, PS),
+	/* all amazons are locations */
+	member(A, Loc),
+	/* amazons's location must be valid with those after it */
+	append(AS, PS, APS),
+	validAmazons(Loc, A, APS).
+
+validAmazons(_, [_|_], []).    % basecase is true
+
+validAmazons(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
+	A =\= C,			% makes sure they are not in same row
+	B =\= D,			% makes sure they are not in same column
+	C - A =\= D - B,	% makes sure they are not in same \ (down to right, up to left) directed diagonal 
+	C - A =\= B - D,    % makes sure they are not in same / (up to right, down to left) directed diagonal 
+	(A+2 =\= C -> true; B+1 =\= D),
+	(A+2 =\= C -> true; B-1 =\= D),
+	(A-2 =\= C -> true; B+1 =\= D),
+	(A-2 =\= C -> true; B-1 =\= D),
+	(A+1 =\= C -> true; B+2 =\= D),
+	(A+1 =\= C -> true; B-2 =\= D),
+	(A-1 =\= C -> true; B+2 =\= D),
+	(A-1 =\= C -> true; B-2 =\= D),
+	validAmazons(Loc, [A|B], PS).
 

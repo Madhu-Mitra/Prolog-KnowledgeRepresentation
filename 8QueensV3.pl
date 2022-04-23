@@ -1,138 +1,99 @@
-/* 		3rd (and most effective) Version!											 														*/
-/* 			This version also uses recursion but goes straight to the end of the list of queens before checking for validity				*/
-/* 			It then moves back towards Q1, checking to make sure that each Q is valid with those after it.									*/
-/* 			Doing so results in a much faster runtime than the other versions, completing the puzzle in about 2 seconds						*/
-/*   			This is because this version gets all of the eightQueens recursive steps done right away and then 							*/
-/*				uses tail recursion with the recursive calls of valid.																		*/
-/*						 																													*/
-/* 		QUERY TO SEND FROM SHELL: ?- eightQueens([Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8]). 														*/
-/* 		it will then print out a solution to the problem. (typing a semicolon will reveal the next solution) 								*/
-/* 		in the solution, the queens' locations on the grid are in the format [y, x], similar to how the 'loc's are instantiated below 		*/
-/* 		the grid is arranged so that [1,1] is in the upper left and [8,8] is in the bottom right 											*/
-/*		example solution:																													*/
-/*			Q1 = [8, 4],																													*/
-/*			Q2 = [7, 2],																													*/
-/*			Q3 = [6, 7],																													*/
-/*			Q4 = [5, 3],																													*/
-/*			Q5 = [4, 6],																													*/
-/*			Q6 = [3, 8],																													*/
-/*			Q7 = [2, 5],																													*/
-/*			Q8 = [1, 1] 																													*/
+/* usage: The main function takes 6 lists as parameters. The first list
+ *        contains two elements, the length and with of the board (e.g. [8, 8]
+ *        for a standard 8x8 chess board. The remaining 5 lists contain the
+ *        pieces to be places on the board in this order: knights, bishops,
+ *        rooks, queens, amazons.
+ *
+ * example: classic 8 queens problem
+ *          main([8, 8], [], [], [], [Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8], []). */
 
-/* RULES */
-
-/* to solve the puzzle, all eight queens must be placed in locations such that no two queens threaten each other */
-/* the rule, eightQueens, initially takes in a list of 8 queens, [Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8], from the shell. */
-/* it then recursively goes through list of queens (starting at end) & makes sure every queen is valid with those after it */
-
-main([]).   % basecase is true 
-
-main([SizeX, SizeY], AS, NS, RS, BS, QS) :-
+main([SizeX, SizeY], NS, BS, RS, QS, AS) :-
+	/* first set up the board locations in Loc */
 	findall([X, Y], (between(1, SizeX, X), between(1, SizeY, Y)), Loc),
-	possibleSolution(Loc, AS, NS, RS, BS, QS),
-	correctSolution(Loc, AS, NS, RS, BS, QS).
+	/* then find a possible solution */
+	possibleSolution(Loc, NS, BS, RS, QS, AS),
+	/* finally check if solution is correct */
+	correctSolution(Loc, NS, BS, RS, QS, AS).
 
-possibleSolution(Loc, AS, NS, RS, BS, QS) :-
-	checkQueens(Loc, QS, []),
+/* Initializes the pieces with possible values. The result is not necessarily a
+ * correct solution. */
+possibleSolution(Loc, NS, BS, RS, QS, AS) :-
+	checkKnights(Loc, NS, []),
 	checkBishops(Loc, BS, []),
 	checkRooks(Loc, RS, []),
-	checkKnights(Loc, NS, []),
+	checkQueens(Loc, QS, []),
 	checkAmazons(Loc, AS, []).
 
-correctSolution(Loc, AS, NS, RS, BS, QS) :-
-	append([AS, NS, RS, BS], PS_Q),
-	checkQueens(Loc, QS, PS_Q),
+/* Checks if the values are a correct solution for the problem. */
+correctSolution(Loc, NS, BS, RS, QS, AS) :-
+	append([AS, RS, BS, QS], PS_N),
+	checkKnights(Loc, NS, PS_N),
 	append([AS, NS, RS, QS], PS_B),
 	checkBishops(Loc, BS, PS_B),
 	append([AS, NS, BS, QS], PS_R),
 	checkRooks(Loc, RS, PS_R),
-	append([AS, RS, BS, QS], PS_N),
-	checkKnights(Loc, NS, PS_N),
+	append([AS, NS, RS, BS], PS_Q),
+	checkQueens(Loc, QS, PS_Q),
 	append([NS, RS, BS, QS], PS_A),
 	checkAmazons(Loc, AS, PS_A).
 
-checkQueens(_, [], _).
+/* Following are various checkXXX functions that check for each type of piece
+ * if all pieces of this type do not attack any other piece. Each of these
+ * functions takes 3 lists as parameters in the form
+ *     checkXXX(Loc, XXXPieces, OtherPieces)
+ * where
+ *     Loc - is the list of board locations
+ *     XXXPieces - is the list of pieces of this type
+ *     OtherPieces - is the list of all pieces of all other types
+ *
+ * This function is evaluated recursively, starting from the end of the list of
+ * pieces of this type (XXXPieces). The base case (XXXPieces is the empty list)
+ * is always true. For the recursive call we split the list XXXPieces into the
+ * first piece and the list of remaining pieces. Then we do the recursive call
+ * with the list of remaining pieces. When the recursion succeeds, we require
+ * that the first piece must be on a location of the board. Finally, we check
+ * that the first piece does not attack any piece of the list of remaining
+ * pieces (XXXPieces minus the first piece) or the list of other pieces
+ * (OtherPieces) combined.
+ *
+ * To check this, we have a function validXXX for each type of piece. In
+ * contrast to the checkXXX function (which is basically a duplication for each
+ * type of piece), the validXXX function is specific for each type of piece:
+ * this function is aware of the directions a piece can attack other pieces.
+ * This function takes 3 lists as parameters in the form
+ *     validXXX(Loc, XXXPiece, OtherPieces)
+ * where
+ *     Loc - is the list of board locations
+ *     XXXPiece - is the list for the location of this piece in the form [x, y]
+ *     OtherPieces - is the list of all other pieces
+ *
+ * The validXXX function again is evaluated recursively. The base (OtherPieces)
+ * is the empty list) is always true. For the recursive call we split the list
+ * OtherPieces into the first piece and the list of remaining pieces. We then
+ * require that this piece (XXXPiece) does not attack the first piece of
+ * OtherPieces. When this succeeds, we recursively call the function with the
+ * list of remaining pieces.
+ */
 
-checkQueens(Loc, [Q|QS], PS) :-    % recursive step
-	/* call on remaining Queens first so that we start at the back */
-	checkQueens(Loc, QS, PS),
-	/* all queens are locations */
-	member(Q, Loc),
-	/* queen's location must be valid with those after it */
-	append(QS, PS, QPS),
-	validQueens(Q, QPS).
-
-/* two queens are considered to be in valid locations if queen2 is not in the span of queen1 (and therefore queen1 is not in the span of queen2) */
-/* queen2 is in the "span" of queen1 if it is either in the same column, the same row, or it can be reached diagonally from queen 1 */
-/* the rule, valid, takes in a queen location "Q" (or "[A|B]") & a list of queen locations "QS" (or "[[C|D]|QS]") */
-/* it then recursively checks [A|B] against the queens in [[C|D]|QS], asserting that their locations must be valid */
-
-validQueens([_|_], []).    % basecase is true
-
-validQueens([A|B], [[C|D]|PS]) :-     % recursive step
-	/* do four tests to make sure [C|D] isn't in the span of [A|B] */
-	A =\= C,			% makes sure they are not in same row
-	B =\= D,			% makes sure they are not in same column
-	C - A =\= D - B,	% makes sure they are not in same \ (down to right, up to left) directed diagonal 
-	C - A =\= B - D,    % makes sure they are not in same / (up to right, down to left) directed diagonal 
-	/* then test [A|B] against remaining PS */
-	validQueens([A|B], PS).
-
-checkBishops(_, [], _).
-
-checkBishops(Loc, [B|BS], PS) :-    % recursive step
-	/* call on remaining Bishops first so that we start at the back */
-	checkBishops(Loc, BS, PS),
-	/* all bishops are locations */
-	member(B, Loc),
-	/* bishop's location must be valid with those after it */
-	append(BS, PS, BPS),
-	validBishops(B, BPS).
-
-validBishops([_|_], []).    % basecase is true
-
-validBishops([A|B], [[C|D]|PS]) :-     % recursive step
-	/* do two tests to make sure [C|D] isn't in the span of [A|B] */
-	C - A =\= D - B,	% makes sure they are not in same \ (down to right, up to left) directed diagonal 
-	C - A =\= B - D,    % makes sure they are not in same / (up to right, down to left) directed diagonal 
-	/* then test [A|B] against remaining PS */
-	validBishops([A|B], PS).
-
-checkRooks(_, [], _).
-
-checkRooks(Loc, [R|RS], PS) :-    % recursive step
-	/* call on remaining Rooks first so that we start at the back */
-	checkRooks(Loc, RS, PS),
-	/* all rooks are locations */
-	member(R, Loc),
-	/* rook's location must be valid with those after it */
-	append(RS, PS, RPS),
-	validRooks(R, RPS).
-
-validRooks([_|_], []).    % basecase is true
-
-validRooks([A|B], [[C|D]|PS]) :-     % recursive step
-	/* do two tests to make sure [C|D] isn't in the span of [A|B] */
-	A =\= C,			% makes sure they are not in same row
-	B =\= D,			% makes sure they are not in same column
-	/* then test [A|B] against remaining PS */
-	validRooks([A|B], PS).
-
+/* base case */
 checkKnights(_, [], _).
 
-checkKnights(Loc, [N|NS], PS) :-    % recursive step
-	/* call on remaining Knights first so that we start at the back */
+checkKnights(Loc, [N|NS], PS) :-
+	/* recursive call */
 	checkKnights(Loc, NS, PS),
-	/* all knights are locations */
+	/* make sure first knight is on board */
 	member(N, Loc),
-	/* knights's location must be valid with those after it */
+	/* make sure first knight does not attack any other piece */
 	append(NS, PS, NPS),
 	validKnights(Loc, N, NPS).
 
-validKnights(_, [_|_], []).    % basecase is true
+/* base case */
+validKnights(_, [_|_], []).
 
-validKnights(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
+validKnights(Loc, [A|B], [[C|D]|PS]) :-
+	/* make sure [A|B] and [C|D] are not in the same location */
 	(A =\= C -> true; B =\= D),
+	/* make sure [A|B] does not reach [C|D] with a knight's move */
 	(A+2 =\= C -> true; B+1 =\= D),
 	(A+2 =\= C -> true; B-1 =\= D),
 	(A-2 =\= C -> true; B+1 =\= D),
@@ -141,26 +102,115 @@ validKnights(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
 	(A+1 =\= C -> true; B-2 =\= D),
 	(A-1 =\= C -> true; B+2 =\= D),
 	(A-1 =\= C -> true; B-2 =\= D),
+	/* exclude permutations */
+	(B < D -> true; A < C),
+	/* recursive call */
 	validKnights(Loc, [A|B], PS).
 
+/* base case */
+checkBishops(_, [], _).
+
+checkBishops(Loc, [B|BS], PS) :-
+	/* recursive call */
+	checkBishops(Loc, BS, PS),
+	/* make sure first bishop is on board */
+	member(B, Loc),
+	/* make sure first bishop does not attack any other piece */
+	append(BS, PS, BPS),
+	validBishops(B, BPS).
+
+/* base case */
+validBishops([_|_], []).
+
+validBishops([A|B], [[C|D]|PS]) :-
+	/* make sure they are not in the same major diagonal */
+	C - A =\= D - B,
+	/* make sure they are not in the same minor diagonal */
+	C - A =\= B - D,
+	/* exclude permutations */
+	(B < D -> true; A < C),
+	/* recursive call */
+	validBishops([A|B], PS).
+
+/* base case */
+checkRooks(_, [], _).
+
+checkRooks(Loc, [R|RS], PS) :-
+	/* recursive call */
+	checkRooks(Loc, RS, PS),
+	/* make sure first rook is on board */
+	member(R, Loc),
+	/* make sure first rook does not attack any other piece */
+	append(RS, PS, RPS),
+	validRooks(R, RPS).
+
+/* base case */
+validRooks([_|_], []).
+
+validRooks([A|B], [[C|D]|PS]) :-
+	/* make sure they are not in the same row */
+	A =\= C,
+	/* make sure they are not in the same column */
+	B =\= D,
+	/* exclude permutations */
+	(B < D -> true; A < C),
+	/* recursive call */
+	validRooks([A|B], PS).
+
+/* base case */
+checkQueens(_, [], _).
+
+checkQueens(Loc, [Q|QS], PS) :-
+	/* recursive call */
+	checkQueens(Loc, QS, PS),
+	/* make sure first queen is on board */
+	member(Q, Loc),
+	/* make sure first queen does not attack any other piece */
+	append(QS, PS, QPS),
+	validQueens(Q, QPS).
+
+/* base case */
+validQueens([_|_], []).
+
+validQueens([A|B], [[C|D]|PS]) :-
+	/* make sure they are not in the same row */
+	A =\= C,
+	/* make sure they are not in the same column */
+	B =\= D,
+	/* make sure they are not in the same major diagonal */
+	C - A =\= D - B,
+	/* make sure they are not in the same minor diagonal */
+	C - A =\= B - D,
+	/* exclude permutations */
+	(B < D -> true; A < C),
+	/* recursive call */
+	validQueens([A|B], PS).
+
+/* base case */
 checkAmazons(_, [], _).
 
-checkAmazons(Loc, [A|AS], PS) :-    % recursive step
-	/* call on remaining Amazons first so that we start at the back */
+checkAmazons(Loc, [A|AS], PS) :-
+	/* recursive call */
 	checkAmazons(Loc, AS, PS),
-	/* all amazons are locations */
+	/* make sure first amazon is on board */
 	member(A, Loc),
-	/* amazons's location must be valid with those after it */
+	/* make sure first amazon does not attack any other piece */
 	append(AS, PS, APS),
 	validAmazons(Loc, A, APS).
 
-validAmazons(_, [_|_], []).    % basecase is true
+/* base case */
+validAmazons(_, [_|_], []).
 
-validAmazons(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
-	A =\= C,			% makes sure they are not in same row
-	B =\= D,			% makes sure they are not in same column
-	C - A =\= D - B,	% makes sure they are not in same \ (down to right, up to left) directed diagonal 
-	C - A =\= B - D,    % makes sure they are not in same / (up to right, down to left) directed diagonal 
+validAmazons(Loc, [A|B], [[C|D]|PS]) :-
+	/* make sure they are not in the same row */
+	A =\= C,
+	/* make sure they are not in the same column */
+	B =\= D,
+	/* make sure they are not in the same major diagonal */
+	C - A =\= D - B,
+	/* make sure they are not in the same minor diagonal */
+	C - A =\= B - D,
+	/* make sure [A|B] does not reach [C|D] with a knight's move */
 	(A+2 =\= C -> true; B+1 =\= D),
 	(A+2 =\= C -> true; B-1 =\= D),
 	(A-2 =\= C -> true; B+1 =\= D),
@@ -169,5 +219,8 @@ validAmazons(Loc, [A|B], [[C|D]|PS]) :-     % recursive step
 	(A+1 =\= C -> true; B-2 =\= D),
 	(A-1 =\= C -> true; B+2 =\= D),
 	(A-1 =\= C -> true; B-2 =\= D),
+	/* exclude permutations */
+	(B < D -> true; A < C),
+	/* recursive call */
 	validAmazons(Loc, [A|B], PS).
 

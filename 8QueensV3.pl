@@ -1,5 +1,5 @@
 /* usage: The main function takes 6 lists as parameters. The first list
- *        contains two elements, the length and with of the board (e.g. [8, 8]
+ *        contains two elements, the length and width of the board (e.g. [8, 8]
  *        for a standard 8x8 chess board. The remaining 5 lists contain the
  *        pieces to be places on the board in this order: knights, bishops,
  *        rooks, queens, amazons.

@@ -15,6 +15,13 @@ main([SizeX, SizeY], NS, BS, RS, QS, AS) :-
 	/* finally check if solution is correct */
 	correctSolution(Loc, NS, BS, RS, QS, AS).
 
+/* Instead of getting one solution, we can also ask to count all possible solutions with countSolutions().
+*/
+countSolutions([SizeX, SizeY], NS, BS, RS, QS, AS) :-
+	findall(.,main([SizeX, SizeY], NS, BS, RS, QS, AS), Ls),
+	length(Ls,L),
+	write(L).
+
 /* Initializes the pieces with possible values. The result is not necessarily a
  * correct solution. */
 possibleSolution(Loc, NS, BS, RS, QS, AS) :-

@@ -37,6 +37,19 @@ correctSolution(Loc, NS, BS, RS, QS, AS) :-
 	append([NS, RS, BS, QS], PS_A),
 	checkAmazons(Loc, AS, PS_A).
 
+/* The function validOrder is a helper function to ensure we exlude
+ * permutations, i.e. solutions that only differ in the order of pieces of the
+ * same type. */
+
+/* base case */
+validOrder(_, [_|_], []).
+
+validOrder(Loc, [A|B], [[C|D]|PS]) :-
+	/* make sure this piece is in a location strictly less than the next */
+	(A < C -> true; (A == C, B < D)),
+	/* recursive call */
+	validOrder(Loc, [A|B], PS).
+
 /* Following are various checkXXX functions that check for each type of piece
  * if all pieces of this type do not attack any other piece. Each of these
  * functions takes 3 lists as parameters in the form
@@ -83,6 +96,8 @@ checkKnights(Loc, [N|NS], PS) :-
 	checkKnights(Loc, NS, PS),
 	/* make sure first knight is on board */
 	member(N, Loc),
+	/* exclude permutations */
+	validOrder(Loc, N, NS),
 	/* make sure first knight does not attack any other piece */
 	append(NS, PS, NPS),
 	validKnights(Loc, N, NPS).
@@ -102,8 +117,6 @@ validKnights(Loc, [A|B], [[C|D]|PS]) :-
 	(A+1 =\= C -> true; B-2 =\= D),
 	(A-1 =\= C -> true; B+2 =\= D),
 	(A-1 =\= C -> true; B-2 =\= D),
-	/* exclude permutations */
-	(B < D -> true; A < C),
 	/* recursive call */
 	validKnights(Loc, [A|B], PS).
 
@@ -115,6 +128,8 @@ checkBishops(Loc, [B|BS], PS) :-
 	checkBishops(Loc, BS, PS),
 	/* make sure first bishop is on board */
 	member(B, Loc),
+	/* exclude permutations */
+	validOrder(Loc, B, BS),
 	/* make sure first bishop does not attack any other piece */
 	append(BS, PS, BPS),
 	validBishops(B, BPS).
@@ -127,8 +142,6 @@ validBishops([A|B], [[C|D]|PS]) :-
 	C - A =\= D - B,
 	/* make sure they are not in the same minor diagonal */
 	C - A =\= B - D,
-	/* exclude permutations */
-	(B < D -> true; A < C),
 	/* recursive call */
 	validBishops([A|B], PS).
 
@@ -140,6 +153,8 @@ checkRooks(Loc, [R|RS], PS) :-
 	checkRooks(Loc, RS, PS),
 	/* make sure first rook is on board */
 	member(R, Loc),
+	/* exclude permutations */
+	validOrder(Loc, R, RS),
 	/* make sure first rook does not attack any other piece */
 	append(RS, PS, RPS),
 	validRooks(R, RPS).
@@ -152,8 +167,6 @@ validRooks([A|B], [[C|D]|PS]) :-
 	A =\= C,
 	/* make sure they are not in the same column */
 	B =\= D,
-	/* exclude permutations */
-	(B < D -> true; A < C),
 	/* recursive call */
 	validRooks([A|B], PS).
 
@@ -165,6 +178,8 @@ checkQueens(Loc, [Q|QS], PS) :-
 	checkQueens(Loc, QS, PS),
 	/* make sure first queen is on board */
 	member(Q, Loc),
+	/* exclude permutations */
+	validOrder(Loc, Q, QS),
 	/* make sure first queen does not attack any other piece */
 	append(QS, PS, QPS),
 	validQueens(Q, QPS).
@@ -181,8 +196,6 @@ validQueens([A|B], [[C|D]|PS]) :-
 	C - A =\= D - B,
 	/* make sure they are not in the same minor diagonal */
 	C - A =\= B - D,
-	/* exclude permutations */
-	(B < D -> true; A < C),
 	/* recursive call */
 	validQueens([A|B], PS).
 
@@ -194,6 +207,8 @@ checkAmazons(Loc, [A|AS], PS) :-
 	checkAmazons(Loc, AS, PS),
 	/* make sure first amazon is on board */
 	member(A, Loc),
+	/* exclude permutations */
+	validOrder(Loc, A, AS),
 	/* make sure first amazon does not attack any other piece */
 	append(AS, PS, APS),
 	validAmazons(Loc, A, APS).
@@ -219,8 +234,6 @@ validAmazons(Loc, [A|B], [[C|D]|PS]) :-
 	(A+1 =\= C -> true; B-2 =\= D),
 	(A-1 =\= C -> true; B+2 =\= D),
 	(A-1 =\= C -> true; B-2 =\= D),
-	/* exclude permutations */
-	(B < D -> true; A < C),
 	/* recursive call */
 	validAmazons(Loc, [A|B], PS).
 
